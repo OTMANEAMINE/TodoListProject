@@ -6,9 +6,7 @@ Ce projet est une application web Django permettant aux utilisateurs de créer, 
 
     	Inscription avec nom d’utilisateur, e-mail et mot de passe.
 
-    	Connexion et déconnexion sécurisées.
-
-    	Réinitialisation du mot de passe via e-mail.
+    	Connexion et déconnexion .
 
     	Chaque utilisateur voit uniquement ses propres tâches.
 
@@ -33,7 +31,7 @@ Ce projet est une application web Django permettant aux utilisateurs de créer, 
 
  
  Technologies Utilisées :
-  Backend : Django, Django Authentication, Django ORM
+  Backend : Django, Django Authentication
 
   Frontend : HTML, CSS 
 
