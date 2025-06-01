@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Mes catégories{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>Mes catégories</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'category_create' %}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Nouvelle catégorie
+        </a>
+    </div>
+</div>
+
+{% if categories %}
+    <div class="row">
+        {% for category in categories %}
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <span class="badge" style="background-color: {{ category.color }};">&nbsp;</span>
+                            {{ category.name }}
+                        </h5>
+                        <p class="card-text">
+                            {{ category.tasks.count }} tâche(s)
+                        </p>
+                        <div class="btn-group">
+                            <a href="{% url 'category_update' category.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i> Modifier
+                            </a>
+                            <a href="{% url 'category_delete' category.pk %}" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Aucune catégorie trouvée.
+    </div>
+{% endif %}
+{% endblock %} 

@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white">
+                <h2 class="card-title mb-0">
+                    {% if 'Nouvelle' in title %}
+                        <i class="fas fa-plus-circle me-2"></i>
+                    {% else %}
+                        <i class="fas fa-edit me-2"></i>
+                    {% endif %}
+                    {{ title }}
+                </h2>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate class="needs-validation">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Titre</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-heading"></i>
+                            </span>
+                            <input type="text" name="title" id="title" 
+                                   class="form-control {% if form.title.errors %}is-invalid{% endif %}"
+                                   value="{{ form.title.value|default:'' }}" required>
+                            {% if form.title.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.title.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-align-left"></i>
+                            </span>
+                            <textarea name="description" id="description" 
+                                      class="form-control {% if form.description.errors %}is-invalid{% endif %}"
+                                      rows="4">{{ form.description.value|default:'' }}</textarea>
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.description.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="due_date" class="form-label">Date limite</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-calendar-alt"></i>
+                            </span>
+                            <input type="datetime-local" name="due_date" id="due_date"
+                                   class="form-control {% if form.due_date.errors %}is-invalid{% endif %}"
+                                   value="{{ form.due_date.value|date:'Y-m-d\TH:i'|default:'' }}" required>
+                            {% if form.due_date.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.due_date.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="status" class="form-label">Statut</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-tasks"></i>
+                            </span>
+                            <select name="status" id="status" 
+                                    class="form-select {% if form.status.errors %}is-invalid{% endif %}">
+                                {% for value, label in form.status.field.choices %}
+                                    <option value="{{ value }}" 
+                                            {% if value == form.status.value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.status.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.status.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="category" class="form-label">Catégorie</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-tag"></i>
+                            </span>
+                            <select name="category" id="category" 
+                                    class="form-select {% if form.category.errors %}is-invalid{% endif %}">
+                                <option value="">Aucune catégorie</option>
+                                {% for category in form.category.field.queryset %}
+                                    <option value="{{ category.id }}" 
+                                            {% if category.id == form.category.value.id %}selected{% endif %}
+                                            style="background-color: {{ category.color }}20">
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.category.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.category.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="parent_task" class="form-label">Tâche parente</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-project-diagram"></i>
+                            </span>
+                            <select name="parent_task" id="parent_task" 
+                                    class="form-select {% if form.parent_task.errors %}is-invalid{% endif %}">
+                                <option value="">Aucune tâche parente</option>
+                                {% for task in form.parent_task.field.queryset %}
+                                    <option value="{{ task.id }}" 
+                                            {% if task.id == form.parent_task.value.id %}selected{% endif %}>
+                                        {{ task.title }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.parent_task.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.parent_task.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'task_list' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-arrow-left me-2"></i>Retour
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+    .card-header {
+        border-radius: 15px 15px 0 0 !important;
+        padding: 1rem;
+    }
+    .input-group-text {
+        background-color: #f8f9fa;
+        border-right: none;
+        min-width: 46px;
+        justify-content: center;
+    }
+    .form-control, .form-select {
+        border-left: none;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #dee2e6;
+        box-shadow: none;
+    }
+    .input-group .form-control:focus, .input-group .form-select:focus {
+        border-left: none;
+    }
+    .btn {
+        padding: 0.8rem 1.5rem;
+    }
+    textarea.form-control {
+        min-height: 120px;
+    }
+    .invalid-feedback {
+        display: block;
+    }
+    .form-label {
+        font-weight: 500;
+    }
+</style>
+{% endblock %} 

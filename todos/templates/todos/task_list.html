@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}Mes tâches{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <form method="get" class="d-flex gap-2">
+            <input type="text" name="search" class="form-control" placeholder="Rechercher une tâche..." value="{{ search_query }}">
+            <select name="status" class="form-select" style="width: auto;">
+                <option value="">Tous les statuts</option>
+                {% for status, label in status_choices %}
+                    <option value="{{ status }}" {% if status == status_filter %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="category" class="form-select" style="width: auto;">
+                <option value="">Toutes les catégories</option>
+                {% for category in user_categories %}
+                    <option value="{{ category.id }}" {% if category.id|stringformat:"s" == category_filter %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> Rechercher
+            </button>
+        </form>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'category_list' %}" class="btn btn-info me-2">
+            <i class="fas fa-tags"></i> Gérer les catégories
+        </a>
+        <a href="{% url 'task_create' %}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Nouvelle tâche
+        </a>
+    </div>
+</div>
+
+{% if page_obj %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th style="width: 30%">Titre</th>
+                    {% if is_staff %}
+                    <th>Utilisateur</th>
+                    {% endif %}
+                    <th>Catégorie</th>
+                    <th>Date limite</th>
+                    <th>Statut</th>
+                    <th>Progression</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in page_obj %}
+                    {% if not task.parent_task %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2">{{ task.title }}</span>
+                                    {% if task.subtasks.exists %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-tasks"></i> {{ task.subtasks.count }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                {% if task.subtasks.exists %}
+                                    <div class="ms-4 mt-2">
+                                        {% for subtask in task.subtasks.all %}
+                                            <div class="subtask-item mb-1">
+                                                <div class="form-check d-inline-block">
+                                                    <input type="checkbox" 
+                                                           class="form-check-input subtask-checkbox" 
+                                                           id="subtask-{{ subtask.id }}"
+                                                           data-task-id="{{ subtask.id }}"
+                                                           {% if subtask.status == 'completed' %}checked{% endif %}>
+                                                    <label class="form-check-label {% if subtask.status == 'completed' %}text-decoration-line-through text-muted{% endif %}" 
+                                                           for="subtask-{{ subtask.id }}">
+                                                        {{ subtask.title }}
+                                                    </label>
+                                                </div>
+                                                <span class="badge status-badge-{{ subtask.id }} {% if subtask.status == 'completed' %}bg-success
+                                                           {% elif subtask.status == 'in_progress' %}bg-warning
+                                                           {% else %}bg-secondary{% endif %}">
+                                                    {{ subtask.get_status_display }}
+                                                </span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </td>
+                            {% if is_staff %}
+                            <td>{{ task.user.username }}</td>
+                            {% endif %}
+                            <td>
+                                {% if task.category %}
+                                    <span class="badge" style="background-color: {{ task.category.color }}">
+                                        {{ task.category.name }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">Non catégorisé</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ task.due_date|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <span class="badge status-badge-{{ task.id }} {% if task.status == 'completed' %}bg-success
+                                           {% elif task.status == 'in_progress' %}bg-warning
+                                           {% else %}bg-secondary{% endif %}">
+                                    {{ task.get_status_display }}
+                                </span>
+                            </td>
+                            <td style="width: 150px;">
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar progress-bar-{{ task.id }} {% if task.get_progress == 100 %}bg-success
+                                                           {% elif task.get_progress >= 50 %}bg-info
+                                                           {% else %}bg-warning{% endif %}"
+                                         role="progressbar"
+                                         style="width: {{ task.get_progress }}%"
+                                         aria-valuenow="{{ task.get_progress }}"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                        {{ task.get_progress }}%
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'task_update' task.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'task_create' %}?parent={{ task.id }}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-plus"></i> Sous-tâche
+                                    </a>
+                                    <a href="{% url 'task_delete' task.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav aria-label="Pagination">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Aucune tâche trouvée.
+    </div>
+{% endif %}
+
+<style>
+.subtask-item {
+    font-size: 0.9em;
+    color: #666;
+}
+.form-check-input:checked + .form-check-label {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.subtask-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const taskId = this.dataset.taskId;
+            const label = this.nextElementSibling;
+            const statusBadge = document.querySelector(`.status-badge-${taskId}`);
+            
+            fetch(`/tasks/${taskId}/toggle/`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Mettre à jour le style du label
+                if (data.status === 'completed') {
+                    label.classList.add('text-decoration-line-through', 'text-muted');
+                    statusBadge.classList.remove('bg-secondary', 'bg-warning');
+                    statusBadge.classList.add('bg-success');
+                } else {
+                    label.classList.remove('text-decoration-line-through', 'text-muted');
+                    statusBadge.classList.remove('bg-success', 'bg-warning');
+                    statusBadge.classList.add('bg-secondary');
+                }
+                statusBadge.textContent = data.status_display;
+                
+                // Mettre à jour la barre de progression de la tâche parente si elle existe
+                if (data.parent_progress !== null) {
+                    const parentProgressBar = document.querySelector(`.progress-bar-${data.parent_id}`);
+                    if (parentProgressBar) {
+                        parentProgressBar.style.width = `${data.parent_progress}%`;
+                        parentProgressBar.textContent = `${data.parent_progress}%`;
+                        
+                        // Mettre à jour les classes de la barre de progression
+                        parentProgressBar.classList.remove('bg-success', 'bg-info', 'bg-warning');
+                        if (data.parent_progress === 100) {
+                            parentProgressBar.classList.add('bg-success');
+                        } else if (data.parent_progress >= 50) {
+                            parentProgressBar.classList.add('bg-info');
+                        } else {
+                            parentProgressBar.classList.add('bg-warning');
+                        }
+                    }
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %} 

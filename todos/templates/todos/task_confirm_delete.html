@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Supprimer la tâche{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title text-danger">Confirmer la suppression</h5>
+        <p class="card-text">
+            Êtes-vous sûr de vouloir supprimer la tâche "{{ task.title }}" ?
+            {% if task.subtasks.exists %}
+            <br>
+            <strong class="text-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                Attention : Cette tâche contient {{ task.subtasks.count }} sous-tâche(s) qui seront également supprimée(s).
+            </strong>
+            {% endif %}
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Confirmer la suppression
+            </button>
+            <a href="{% url 'task_list' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %} 
